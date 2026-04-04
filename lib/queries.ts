@@ -139,61 +139,60 @@ export async function getOutings(
   limit: number = 20,
   roleFilter: RoleFilter = "all"
 ): Promise<Outing[]> {
-  if (!isSupabaseConfigured) {
-    let filtered = MOCK_OUTINGS;
+  try {
+    let query = supabase
+      .from("outings")
+      .select("*")
+      .order("game_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
     if (roleFilter === "starters") {
-      filtered = filtered.filter((o) => o.is_starter);
+      query = query.eq("is_starter", true);
     } else if (roleFilter === "bullpen") {
-      filtered = filtered.filter((o) => !o.is_starter);
+      query = query.eq("is_starter", false);
     }
-    return filtered.slice(0, limit);
-  }
 
-  let query = supabase
-    .from("outings")
-    .select("*")
-    .order("game_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    const { data, error } = await query;
 
-  if (roleFilter === "starters") {
-    query = query.eq("is_starter", true);
-  } else if (roleFilter === "bullpen") {
-    query = query.eq("is_starter", false);
-  }
+    if (error) {
+      console.error("Error fetching outings:", error);
+      return MOCK_OUTINGS.slice(0, limit);
+    }
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching outings:", error);
+    if (data && data.length > 0) {
+      return data;
+    }
+    return MOCK_OUTINGS.slice(0, limit);
+  } catch (err) {
+    console.error("Supabase error:", err);
     return MOCK_OUTINGS.slice(0, limit);
   }
-
-  return data || [];
 }
 
 /**
  * Fetch the latest outing
  */
 export async function getLatestOuting(): Promise<Outing | null> {
-  if (!isSupabaseConfigured) {
+  try {
+    const { data, error } = await supabase
+      .from("outings")
+      .select("*")
+      .order("game_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error("Error fetching latest outing:", error);
+      return MOCK_OUTINGS[0] || null;
+    }
+
+    return data || MOCK_OUTINGS[0] || null;
+  } catch (err) {
+    console.error("Supabase error:", err);
     return MOCK_OUTINGS[0] || null;
   }
-
-  const { data, error } = await supabase
-    .from("outings")
-    .select("*")
-    .order("game_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error) {
-    console.error("Error fetching latest outing:", error);
-    return MOCK_OUTINGS[0] || null;
-  }
-
-  return data;
 }
 
 /**
