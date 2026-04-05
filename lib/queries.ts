@@ -139,6 +139,15 @@ export async function getOutings(
   limit: number = 20,
   roleFilter: RoleFilter = "all"
 ): Promise<Outing[]> {
+  // Check if env vars exist
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    console.log("[getOutings] Missing env vars, using mock data");
+    return MOCK_OUTINGS.slice(0, limit);
+  }
+
   try {
     let query = supabase
       .from("outings")
@@ -156,16 +165,18 @@ export async function getOutings(
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error fetching outings:", error);
+      console.error("[getOutings] Supabase error:", error);
       return MOCK_OUTINGS.slice(0, limit);
     }
 
+    console.log(`[getOutings] Fetched ${data?.length || 0} outings from Supabase`);
+    
     if (data && data.length > 0) {
       return data;
     }
     return MOCK_OUTINGS.slice(0, limit);
   } catch (err) {
-    console.error("Supabase error:", err);
+    console.error("[getOutings] Exception:", err);
     return MOCK_OUTINGS.slice(0, limit);
   }
 }
