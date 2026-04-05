@@ -17,7 +17,8 @@ interface PageProps {
   searchParams: { role?: string };
 }
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const dynamic = "force-dynamic"; // Always fetch fresh data
+export const revalidate = 0;
 
 export default async function HomePage({ searchParams }: PageProps) {
   const roleFilter = (searchParams.role as RoleFilter) || "all";
