@@ -5,17 +5,26 @@
  * Uses environment variables for configuration.
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let supabaseInstance: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase environment variables not set. Dashboard will use mock data."
-  );
+export function getSupabase(): SupabaseClient {
+  if (supabaseInstance) return supabaseInstance;
+  
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    throw new Error("Supabase environment variables not configured");
+  }
+  
+  supabaseInstance = createClient(url, key);
+  return supabaseInstance;
 }
 
-export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
-
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+// For backwards compatibility
+export const supabase = {
+  from: (table: string) => getSupabase().from(table),
+  storage: { from: (bucket: string) => getSupabase().storage.from(bucket) },
+};

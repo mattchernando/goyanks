@@ -5,7 +5,7 @@
  * These are used in Server Components for SSR.
  */
 
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { supabase } from "./supabase";
 import type { Outing, QuickStats, TrendDataPoint, RoleFilter } from "@/types";
 
 // Mock data for development when Supabase isn't configured
